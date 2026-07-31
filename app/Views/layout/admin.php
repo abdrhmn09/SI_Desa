@@ -15,6 +15,7 @@
             --topbar-height: 60px;
         }
         body { background: #f0f4f8; font-family: 'Segoe UI', sans-serif; }
+        
         /* Sidebar */
         #sidebar {
             width: var(--sidebar-width);
@@ -56,10 +57,29 @@
             align-items: center;
             gap: .6rem;
             transition: background .15s;
+            text-decoration: none;
         }
         #sidebar .nav-link:hover { background: var(--sidebar-hover); color: #fff; }
         #sidebar .nav-link.active { background: var(--sidebar-active); color: #fff; font-weight: 600; }
         #sidebar .nav-link i { font-size: 1rem; width: 1.2rem; }
+        
+        /* Dropdown/Collapse Icon Animation */
+        .collapse-icon {
+            margin-left: auto;
+            transition: transform 0.3s ease;
+            font-size: 0.8rem !important;
+        }
+        /* Putar icon panah jika aria-expanded="true" */
+        #sidebar .nav-link[aria-expanded="true"] .collapse-icon {
+            transform: rotate(180deg);
+        }
+        /* Sub-menu styling */
+        .collapse .nav-link {
+            padding-left: 2.8rem !important; /* Indentasi untuk sub-menu */
+            font-size: 0.825rem;
+            background: rgba(0,0,0,0.1);
+        }
+
         /* Topbar */
         #content {
             margin-left: var(--sidebar-width);
@@ -93,22 +113,20 @@
             display: flex; align-items: center; justify-content: center;
             font-size: .75rem; font-weight: 700;
         }
-        /* Main */
+        
+        /* Main & Cards */
         .main-content { flex: 1; padding: 1.5rem; }
-        /* Cards */
         .card { border: none; border-radius: .75rem; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
         .card-header { background: #fff; border-bottom: 1px solid #f1f5f9; border-radius: .75rem .75rem 0 0 !important; padding: 1rem 1.25rem; font-weight: 600; }
-        /* Table */
         .table th { font-size: .8rem; text-transform: uppercase; letter-spacing: .5px; color: #64748b; background: #f8fafc; }
-        /* Badges */
         .badge { font-weight: 500; }
+        
         /* Responsive */
         @media (max-width: 768px) {
             #sidebar { transform: translateX(-100%); }
             #sidebar.open { transform: translateX(0); }
             #content { margin-left: 0; }
         }
-        /* Overlay */
         #overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 1039; }
         #overlay.show { display: block; }
     </style>
@@ -122,15 +140,12 @@
     $roleId = session()->get('role_id');
     $userPermissions = [];
     
-    // Ambil daftar permission berdasarkan role user jika user memiliki role
     if ($roleId) {
         $roleModel = new \App\Models\RoleModel();
         $userPermissions = $roleModel->getPermissions($roleId);
     }
 
-    // Helper function sederhana (closure) untuk mengecek permission
     $hasPermission = function(string $perm) use ($userPermissions) {
-        // Jika user punya 'akses_semua_modul', langsung beri akses (Bypass/Superadmin)
         if (in_array('akses_semua_modul', $userPermissions)) {
             return true;
         }
@@ -151,63 +166,142 @@
     <a href="<?= site_url('dashboard') ?>" class="nav-link <?= (uri_string() === 'dashboard') ? 'active' : '' ?>">
         <i class="bi bi-speedometer2"></i> Dashboard
     </a>
+    <a href="<?= site_url('profil') ?>" class="nav-link <?= (uri_string() === 'profil') ? 'active' : '' ?>">
+        <i class="bi bi-person-vcard"></i> Profil Data Diri
+    </a>
 
+    <!-- DROPDOWN KEPENDUDUKAN -->
     <?php if ($hasPermission('kelola_kependudukan')): ?>
-    <div class="sidebar-label">Kependudukan</div>
-    <a href="<?= site_url('penduduk') ?>" class="nav-link <?= (str_starts_with(uri_string(), 'penduduk')) ? 'active' : '' ?>">
-        <i class="bi bi-people"></i> Data Penduduk
-    </a>
-    <a href="<?= site_url('kartu-keluarga') ?>" class="nav-link <?= (str_starts_with(uri_string(), 'kartu-keluarga')) ? 'active' : '' ?>">
-        <i class="bi bi-journal-bookmark"></i> Kartu Keluarga
-    </a>
-    <a href="<?= site_url('import') ?>" class="nav-link <?= (str_starts_with(uri_string(), 'import')) ? 'active' : '' ?>">
-        <i class="bi bi-file-earmark-arrow-up"></i> Import Data
-    </a>
+        <?php 
+            // Cek apakah ada submenu kependudukan yang aktif
+            $isPendudukActive = str_starts_with(uri_string(), 'penduduk') || str_starts_with(uri_string(), 'kartu-keluarga') || str_starts_with(uri_string(), 'import'); 
+        ?>
+        <a href="#menuKependudukan" data-bs-toggle="collapse" aria-expanded="<?= $isPendudukActive ? 'true' : 'false' ?>" class="nav-link <?= $isPendudukActive ? 'active' : '' ?>">
+            <i class="bi bi-people"></i> Kependudukan
+            <i class="bi bi-chevron-down collapse-icon"></i>
+        </a>
+        <div class="collapse <?= $isPendudukActive ? 'show' : '' ?>" id="menuKependudukan">
+            <a href="<?= site_url('penduduk') ?>" class="nav-link <?= (str_starts_with(uri_string(), 'penduduk')) ? 'active' : '' ?>">
+                Data Penduduk
+            </a>
+            <a href="<?= site_url('kartu-keluarga') ?>" class="nav-link <?= (str_starts_with(uri_string(), 'kartu-keluarga')) ? 'active' : '' ?>">
+                Kartu Keluarga
+            </a>
+            <a href="<?= site_url('import') ?>" class="nav-link <?= (str_starts_with(uri_string(), 'import')) ? 'active' : '' ?>">
+                Import Data
+            </a>
+        </div>
     <?php endif; ?>
 
-    <?php if ($hasPermission('kelola_surat')): ?>
-    <div class="sidebar-label">Pelayanan</div>
-    <a href="<?= site_url('surat/pilih') ?>" class="nav-link <?= (str_starts_with(uri_string(), 'surat')) ? 'active' : '' ?>">
-        <i class="bi bi-envelope-paper"></i> Cetak Surat
-    </a>
+    <!-- DROPDOWN PELAYANAN SURAT (HANYA UNTUK PENDUDUK / BUKAN ADMIN) -->
+    <!-- DITAMBAHKAN: && !$hasPermission('kelola_surat_admin') agar admin tidak melihat dropdown ini -->
+    <?php if ($hasPermission('kelola_surat_penduduk') && !$hasPermission('kelola_surat_admin')): ?>
+        <?php 
+            $isPelayananActive = uri_string() === 'surat/pilih' || str_starts_with(uri_string(), 'surat/form') || uri_string() === 'surat/riwayat';
+        ?>
+        <a href="#menuPelayanan" data-bs-toggle="collapse" aria-expanded="<?= $isPelayananActive ? 'true' : 'false' ?>" class="nav-link <?= $isPelayananActive ? 'active' : '' ?>">
+            <i class="bi bi-envelope-paper"></i> Pelayanan Surat
+            <i class="bi bi-chevron-down collapse-icon"></i>
+        </a>
+        <div class="collapse <?= $isPelayananActive ? 'show' : '' ?>" id="menuPelayanan">
+            <a href="<?= site_url('surat/pilih') ?>" class="nav-link <?= (uri_string() === 'surat/pilih' || str_starts_with(uri_string(), 'surat/form')) ? 'active' : '' ?>">
+                Ajukan Surat
+            </a>
+            <a href="<?= site_url('surat/riwayat') ?>" class="nav-link <?= (uri_string() === 'surat/riwayat') ? 'active' : '' ?>">
+                Riwayat Saya
+            </a>
+        </div>
     <?php endif; ?>
 
-    <?php if ($hasPermission('kelola_artikel') || $hasPermission('kelola_galeri')): ?>
-    <div class="sidebar-label">Konten & Informasi</div>
-        <?php if ($hasPermission('kelola_artikel')): ?>
-        <a href="<?= site_url('artikel') ?>" class="nav-link <?= (str_starts_with(uri_string(), 'artikel')) ? 'active' : '' ?>">
-            <i class="bi bi-newspaper"></i> Artikel & Berita
+    <!-- DROPDOWN KELOLA SURAT ADMIN -->
+    <?php if ($hasPermission('kelola_surat_admin')): ?>
+        <?php 
+            $isAdminSuratActive = str_starts_with(uri_string(), 'surat/persetujuan') || str_starts_with(uri_string(), 'surat/semua') || str_starts_with(uri_string(), 'surat/jenis');
+        ?>
+        <a href="#menuAdminSurat" data-bs-toggle="collapse" aria-expanded="<?= $isAdminSuratActive ? 'true' : 'false' ?>" class="nav-link <?= $isAdminSuratActive ? 'active' : '' ?>">
+            <i class="bi bi-mailbox"></i> Kelola Surat
+            <i class="bi bi-chevron-down collapse-icon"></i>
         </a>
-        <?php endif; ?>
-        
-        <?php if ($hasPermission('kelola_galeri')): ?>
-        <a href="<?= site_url('galeri') ?>" class="nav-link <?= (str_starts_with(uri_string(), 'galeri')) ? 'active' : '' ?>">
-            <i class="bi bi-images"></i> Galeri Foto
-        </a>
-        <a href="<?= site_url('video') ?>" class="nav-link <?= (str_starts_with(uri_string(), 'video')) ? 'active' : '' ?>">
-            <i class="bi bi-play-btn"></i> Video
-        </a>
-        <?php endif; ?>
+        <div class="collapse <?= $isAdminSuratActive ? 'show' : '' ?>" id="menuAdminSurat">
+            <a href="<?= site_url('surat/persetujuan') ?>" class="nav-link <?= (str_starts_with(uri_string(), 'surat/persetujuan')) ? 'active' : '' ?>">
+                Persetujuan
+            </a>
+            <a href="<?= site_url('surat/semua') ?>" class="nav-link <?= (str_starts_with(uri_string(), 'surat/semua')) ? 'active' : '' ?>">
+                Semua Riwayat
+            </a>
+            <a href="<?= site_url('surat/jenis') ?>" class="nav-link <?= (str_starts_with(uri_string(), 'surat/jenis')) ? 'active' : '' ?>">
+                Jenis Surat
+            </a>
+        </div>
     <?php endif; ?>
 
+    <!-- DROPDOWN KONTEN & INFORMASI -->
+    <?php if ($hasPermission('kelola_artikel') || $hasPermission('kelola_galeri') || $hasPermission('kelola_sejarah')): ?>
+        <?php 
+            $isKontenActive = str_starts_with(uri_string(), 'artikel') || str_starts_with(uri_string(), 'galeri') || str_starts_with(uri_string(), 'video') || str_starts_with(uri_string(), 'sejarah');
+        ?>
+        <a href="#menuKonten" data-bs-toggle="collapse" aria-expanded="<?= $isKontenActive ? 'true' : 'false' ?>" class="nav-link <?= $isKontenActive ? 'active' : '' ?>">
+            <i class="bi bi-newspaper"></i> Konten & Info
+            <i class="bi bi-chevron-down collapse-icon"></i>
+        </a>
+        <div class="collapse <?= $isKontenActive ? 'show' : '' ?>" id="menuKonten">
+            <?php if ($hasPermission('kelola_artikel')): ?>
+                <a href="<?= site_url('artikel') ?>" class="nav-link <?= (str_starts_with(uri_string(), 'artikel')) ? 'active' : '' ?>">
+                    Artikel & Berita
+                </a>
+            <?php endif; ?>
+            <?php if ($hasPermission('kelola_galeri')): ?>
+                <a href="<?= site_url('galeri') ?>" class="nav-link <?= (str_starts_with(uri_string(), 'galeri')) ? 'active' : '' ?>">
+                    Galeri Foto
+                </a>
+                <a href="<?= site_url('video') ?>" class="nav-link <?= (str_starts_with(uri_string(), 'video')) ? 'active' : '' ?>">
+                    Video
+                </a>
+            <?php endif; ?>
+            <?php if ($hasPermission('kelola_artikel')): ?>
+                <a href="<?= site_url('sejarah') ?>" class="nav-link <?= (str_starts_with(uri_string(), 'sejarah')) ? 'active' : '' ?>">
+                    Sejarah Kepemimpinan
+                </a>
+            <?php endif; ?>
+        </div>
+    <?php endif; ?>
+
+    <!-- DROPDOWN ADMINISTRASI -->
     <?php if ($hasPermission('akses_pengaturan_aplikasi')): ?>
-    <div class="sidebar-label">Administrasi</div>
-    <a href="<?= site_url('pemerintahan') ?>" class="nav-link <?= (str_starts_with(uri_string(), 'pemerintahan')) ? 'active' : '' ?>">
-        <i class="bi bi-diagram-3"></i> Struktur Pemerintahan
-    </a>
-    <a href="<?= site_url('pengaturan') ?>" class="nav-link <?= (str_starts_with(uri_string(), 'pengaturan')) ? 'active' : '' ?>">
-        <i class="bi bi-gear"></i> Pengaturan Desa
-    </a>
+        <?php 
+            $isAdministrasiActive = str_starts_with(uri_string(), 'pemerintahan') || str_starts_with(uri_string(), 'pengaturan');
+        ?>
+        <a href="#menuAdministrasi" data-bs-toggle="collapse" aria-expanded="<?= $isAdministrasiActive ? 'true' : 'false' ?>" class="nav-link <?= $isAdministrasiActive ? 'active' : '' ?>">
+            <i class="bi bi-diagram-3"></i> Administrasi
+            <i class="bi bi-chevron-down collapse-icon"></i>
+        </a>
+        <div class="collapse <?= $isAdministrasiActive ? 'show' : '' ?>" id="menuAdministrasi">
+            <a href="<?= site_url('pemerintahan') ?>" class="nav-link <?= (str_starts_with(uri_string(), 'pemerintahan')) ? 'active' : '' ?>">
+                Struktur Pemerintahan
+            </a>
+            <a href="<?= site_url('pengaturan') ?>" class="nav-link <?= (str_starts_with(uri_string(), 'pengaturan')) ? 'active' : '' ?>">
+                Pengaturan Desa
+            </a>
+        </div>
     <?php endif; ?>
 
+    <!-- DROPDOWN PENGGUNA -->
     <?php if ($hasPermission('manajemen_pengguna')): ?>
-    <div class="sidebar-label">Pengguna</div>
-    <a href="<?= site_url('pengguna') ?>" class="nav-link <?= (str_starts_with(uri_string(), 'pengguna')) ? 'active' : '' ?>">
-        <i class="bi bi-person-badge"></i> Manajemen Pengguna
-    </a>
-    <a href="<?= site_url('role') ?>" class="nav-link <?= (str_starts_with(uri_string(), 'role')) ? 'active' : '' ?>">
-        <i class="bi bi-shield-lock"></i> Role & Hak Akses
-    </a>
+        <?php 
+            $isPenggunaActive = str_starts_with(uri_string(), 'pengguna') || str_starts_with(uri_string(), 'role');
+        ?>
+        <a href="#menuPengguna" data-bs-toggle="collapse" aria-expanded="<?= $isPenggunaActive ? 'true' : 'false' ?>" class="nav-link <?= $isPenggunaActive ? 'active' : '' ?>">
+            <i class="bi bi-person-badge"></i> Pengguna
+            <i class="bi bi-chevron-down collapse-icon"></i>
+        </a>
+        <div class="collapse <?= $isPenggunaActive ? 'show' : '' ?>" id="menuPengguna">
+            <a href="<?= site_url('pengguna') ?>" class="nav-link <?= (str_starts_with(uri_string(), 'pengguna')) ? 'active' : '' ?>">
+                Manajemen Pengguna
+            </a>
+            <a href="<?= site_url('role') ?>" class="nav-link <?= (str_starts_with(uri_string(), 'role')) ? 'active' : '' ?>">
+                Role & Hak Akses
+            </a>
+        </div>
     <?php endif; ?>
 
     <div class="mt-auto p-3 border-top border-white border-opacity-10">

@@ -77,7 +77,7 @@
                 <p class="text-muted small">Upload file Excel (.xlsx) berisi data kartu keluarga sesuai format template.</p>
                 <div class="alert alert-info small p-2">
                     <i class="bi bi-info-circle me-1"></i>
-                    Kolom: No KK, Alamat, RT, RW, Tanggal Dikeluarkan
+                    Kolom: No KK, Alamat, Dusun, RT, RW, Tanggal Dikeluarkan
                 </div>
                 <form action="<?= site_url('import/kk') ?>" method="post" enctype="multipart/form-data">
                     <?= csrf_field() ?>

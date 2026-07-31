@@ -10,11 +10,13 @@ class PendudukController extends BaseController
 {
     protected PendudukModel $pendudukModel;
     protected KartuKeluargaModel $kartuKeluargaModel;
+    protected $db;
 
     public function __construct()
     {
         $this->pendudukModel      = new PendudukModel();
         $this->kartuKeluargaModel = new KartuKeluargaModel();
+        $this->db                 = \Config\Database::connect();
     }
 
     /**
@@ -23,13 +25,15 @@ class PendudukController extends BaseController
      */
     public function index()
     {
-        $cari        = $this->request->getGet('cari');
-        $filterJK    = $this->request->getGet('jk');
-        $filterHub   = $this->request->getGet('hubungan');
+        $cari         = $this->request->getGet('cari');
+        $filterJK     = $this->request->getGet('jk');
+        $filterHub    = $this->request->getGet('hubungan');
+        $filterVerif  = $this->request->getGet('verifikasi');
 
         $builder = $this->pendudukModel
-            ->select('penduduk.*, kartu_keluarga.no_kk, kartu_keluarga.rt, kartu_keluarga.rw')
-            ->join('kartu_keluarga', 'kartu_keluarga.id = penduduk.kartu_keluarga_id', 'left');
+            ->select('penduduk.*, kartu_keluarga.no_kk, kartu_keluarga.rt, kartu_keluarga.rw, users.username as linked_user')
+            ->join('kartu_keluarga', 'kartu_keluarga.id = penduduk.kartu_keluarga_id', 'left')
+            ->join('users', 'users.penduduk_id = penduduk.id', 'left');
 
         if ($cari) {
             $builder->groupStart()
@@ -39,12 +43,16 @@ class PendudukController extends BaseController
         }
         if ($filterJK)  { $builder->where('penduduk.jenis_kelamin', $filterJK); }
         if ($filterHub) { $builder->where('penduduk.hubungan_keluarga', $filterHub); }
+        if ($filterVerif !== null && $filterVerif !== '') {
+            $builder->where('penduduk.is_verified', (int)$filterVerif);
+        }
 
-        $data['penduduk']       = $builder->orderBy('penduduk.nama_lengkap', 'ASC')->findAll();
-        $data['cari']           = $cari;
-        $data['filterJK']       = $filterJK;
-        $data['filterHubungan'] = $filterHub;
-        $data['title']          = 'Data Kependudukan';
+        $data['penduduk']         = $builder->orderBy('penduduk.nama_lengkap', 'ASC')->findAll();
+        $data['cari']             = $cari;
+        $data['filterJK']         = $filterJK;
+        $data['filterHubungan']   = $filterHub;
+        $data['filterVerifikasi'] = $filterVerif;
+        $data['title']            = 'Data Kependudukan';
 
         return view('penduduk/index', $data);
     }
@@ -129,8 +137,9 @@ class PendudukController extends BaseController
     public function show($id)
     {
         $penduduk = $this->pendudukModel
-            ->select('penduduk.*, kartu_keluarga.no_kk, kartu_keluarga.rt, kartu_keluarga.rw, kartu_keluarga.alamat as alamat_kk')
+            ->select('penduduk.*, kartu_keluarga.no_kk, kartu_keluarga.rt, kartu_keluarga.rw, kartu_keluarga.alamat as alamat_kk, users.username as linked_username, users.email as linked_email')
             ->join('kartu_keluarga', 'kartu_keluarga.id = penduduk.kartu_keluarga_id', 'left')
+            ->join('users', 'users.penduduk_id = penduduk.id', 'left')
             ->find($id);
 
         if (! $penduduk) {
@@ -151,6 +160,24 @@ class PendudukController extends BaseController
             'sesamaKK'  => $sesamaKK,
             'title'     => 'Detail: ' . $penduduk['nama_lengkap'],
         ]);
+    }
+
+    /**
+     * Mengubah status verifikasi data penduduk (Toggle Verified / Unverified)
+     */
+    public function verifikasi($id)
+    {
+        $penduduk = $this->pendudukModel->find($id);
+
+        if (! $penduduk) {
+            return redirect()->to('/penduduk')->with('error', 'Data penduduk tidak ditemukan.');
+        }
+
+        $newStatus = $penduduk['is_verified'] ? 0 : 1;
+        $this->pendudukModel->update($id, ['is_verified' => $newStatus]);
+
+        $pesan = $newStatus ? 'Data penduduk berhasil diverifikasi!' : 'Status verifikasi data penduduk dibatalkan.';
+        return redirect()->back()->with('success', $pesan);
     }
 
     /**
@@ -215,26 +242,196 @@ class PendudukController extends BaseController
      *
      * @param int $id
      */
+    // public function delete($id)
+    // {
+    //     $penduduk = $this->pendudukModel->find($id);
+
+    //     if (! $penduduk) {
+    //         throw new \CodeIgniter\Exceptions\PageNotFoundException('Data penduduk tidak ditemukan.');
+    //     }
+
+    //     // Cegah hapus jika masih menjadi kepala keluarga pada KK manapun
+    //     $isKepalaKK = $this->kartuKeluargaModel
+    //         ->where('kepala_keluarga_id', $id)
+    //         ->countAllResults();
+
+    //     if ($isKepalaKK > 0) {
+    //         return redirect()->to('/penduduk')
+    //             ->with('error', 'Data penduduk tidak dapat dihapus karena masih tercatat sebagai Kepala Keluarga. Ubah kepala keluarga terlebih dahulu.');
+    //     }
+
+    //     $this->pendudukModel->delete($id);
+
+    //     return redirect()->to('/penduduk')->with('success', 'Data penduduk berhasil dihapus.');
+    // }
     public function delete($id)
     {
-        $penduduk = $this->pendudukModel->find($id);
+        try {
+            $penduduk = $this->pendudukModel->find($id);
 
-        if (! $penduduk) {
-            throw new \CodeIgniter\Exceptions\PageNotFoundException('Data penduduk tidak ditemukan.');
-        }
+            if (! $penduduk) {
+                return redirect()->to('/penduduk')->with('error', 'Data penduduk tidak ditemukan.');
+            }
 
-        // Cegah hapus jika masih menjadi kepala keluarga pada KK manapun
-        $isKepalaKK = $this->kartuKeluargaModel
-            ->where('kepala_keluarga_id', $id)
-            ->countAllResults();
+            // Cek apakah dia kepala keluarga
+            $isKepalaKK = $this->kartuKeluargaModel
+                ->where('kepala_keluarga_id', $id)
+                ->countAllResults();
 
-        if ($isKepalaKK > 0) {
+            if ($isKepalaKK > 0) {
+                return redirect()->to('/penduduk')
+                    ->with('error', 'Data penduduk tidak dapat dihapus karena masih tercatat sebagai Kepala Keluarga. Ubah kepala keluarga terlebih dahulu.');
+            }
+
+            // Proses hapus
+            $this->pendudukModel->delete($id);
+
+            return redirect()->to('/penduduk')->with('success', 'Data penduduk berhasil dihapus.');
+
+        } catch (\Throwable $e) {
+            // MENANGKAP SEGALA JENIS ERROR!
+            // Jika gagal hapus karena berelasi dengan tabel log_surat dll, pesan ini akan muncul
             return redirect()->to('/penduduk')
-                ->with('error', 'Data penduduk tidak dapat dihapus karena masih tercatat sebagai Kepala Keluarga. Ubah kepala keluarga terlebih dahulu.');
+                ->with('error', 'Gagal menghapus: Data penduduk ini masih terkait dengan data lain (misal: riwayat surat). Detail: ' . $e->getMessage());
+        }
+    }
+
+    // =====================================================================
+    // exportPage() — Halaman filter sebelum ekspor Excel
+    // =====================================================================
+    public function exportPage()
+    {
+        // Ambil list dusun unik untuk filter
+        $dusunList = $this->db->table('kartu_keluarga')
+            ->select('dusun')
+            ->where('dusun IS NOT NULL', null, false)
+            ->where('dusun !=', '')
+            ->groupBy('dusun')
+            ->orderBy('dusun', 'ASC')
+            ->get()->getResultArray();
+
+        return view('penduduk/export', [
+            'title'     => 'Ekspor Data Penduduk',
+            'dusunList' => array_column($dusunList, 'dusun'),
+        ]);
+    }
+
+    // =====================================================================
+    // export() — Generate & download file Excel berdasarkan filter
+    // =====================================================================
+    public function export()
+    {
+        // Kumpulkan filter dari query string
+        $filter = [
+            'jenis_kelamin'   => $this->request->getGet('jenis_kelamin'),
+            'agama'           => $this->request->getGet('agama'),
+            'pendidikan'      => $this->request->getGet('pendidikan'),
+            'pekerjaan'       => $this->request->getGet('pekerjaan'),
+            'status_kawin'    => $this->request->getGet('status_kawin'),
+            'golongan_darah'  => $this->request->getGet('golongan_darah'),
+            'kewarganegaraan' => $this->request->getGet('kewarganegaraan'),
+            'status_tinggal'  => $this->request->getGet('status_tinggal'),
+            'hubungan_keluarga' => $this->request->getGet('hubungan_keluarga'),
+            'is_dtks'         => $this->request->getGet('is_dtks'),
+            'dusun'           => $this->request->getGet('dusun'),
+        ];
+
+        $data = $this->pendudukModel->getAllWithKK($filter);
+
+        // ---- Buat spreadsheet ----
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet       = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Data Penduduk');
+
+        // Header
+        $headers = [
+            'A' => 'No',
+            'B' => 'NIK',
+            'C' => 'Nama Lengkap',
+            'D' => 'No. KK',
+            'E' => 'Hubungan Keluarga',
+            'F' => 'Tempat Lahir',
+            'G' => 'Tanggal Lahir',
+            'H' => 'Jenis Kelamin',
+            'I' => 'Agama',
+            'J' => 'Pendidikan',
+            'K' => 'Pekerjaan',
+            'L' => 'Status Kawin',
+            'M' => 'Golongan Darah',
+            'N' => 'Kewarganegaraan',
+            'O' => 'Status Tinggal',
+            'P' => 'Alamat',
+            'Q' => 'Dusun',
+            'R' => 'RT',
+            'S' => 'RW',
+            'T' => 'Nama Ayah',
+            'U' => 'NIK Ayah',
+            'V' => 'Nama Ibu',
+            'W' => 'NIK Ibu',
+            'X' => 'No. HP',
+            'Y' => 'Email',
+            'Z' => 'Status DTKS',
+        ];
+
+        // Style header
+        $headerStyle = [
+            'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
+            'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                       'startColor' => ['argb' => 'FF1E3A5F']],
+            'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
+        ];
+
+        foreach ($headers as $col => $label) {
+            $sheet->setCellValue($col . '1', $label);
+            $sheet->getStyle($col . '1')->applyFromArray($headerStyle);
+            $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
-        $this->pendudukModel->delete($id);
+        // Isi data
+        $row = 2;
+        foreach ($data as $i => $p) {
+            $sheet->fromArray([
+                $i + 1,
+                $p['nik']                  ?? '',
+                $p['nama_lengkap']         ?? '',
+                $p['no_kk']               ?? '',
+                $p['hubungan_keluarga']   ?? '',
+                $p['tempat_lahir']        ?? '',
+                $p['tanggal_lahir']       ?? '',
+                $p['jenis_kelamin']       ?? '',
+                $p['agama']              ?? '',
+                $p['pendidikan']         ?? '',
+                $p['pekerjaan']          ?? '',
+                $p['status_kawin']       ?? '',
+                $p['golongan_darah']     ?? '',
+                $p['kewarganegaraan']    ?? '',
+                $p['status_tinggal']     ?? '',
+                $p['alamat']             ?? '',
+                $p['dusun']              ?? '',
+                $p['rt']                 ?? '',
+                $p['rw']                 ?? '',
+                $p['nama_ayah']          ?? '',
+                $p['nik_ayah']           ?? '',
+                $p['nama_ibu']           ?? '',
+                $p['nik_ibu']            ?? '',
+                $p['no_hp']              ?? '',
+                $p['email_penduduk']     ?? '',
+                $p['is_dtks'] ? 'Ya' : 'Tidak',
+            ], null, 'A' . $row);
+            $row++;
+        }
 
-        return redirect()->to('/penduduk')->with('success', 'Data penduduk berhasil dihapus.');
+        // Freeze row pertama
+        $sheet->freezePane('A2');
+
+        // Output file
+        $filename = 'data_penduduk_' . date('Ymd_His') . '.xlsx';
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Cache-Control: max-age=0');
+
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $writer->save('php://output');
+        exit;
     }
 }

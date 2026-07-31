@@ -59,24 +59,49 @@ $routes->group('pemerintahan', ['filter' => 'permission:akses_pengaturan_aplikas
     $routes->post('update/(:num)', 'StrukturPemerintahanController::update/$1');
     $routes->delete('delete/(:num)', 'StrukturPemerintahanController::delete/$1');
 });
-$routes->group('surat', ['filter' => 'permission:kelola_surat'], static function ($routes) {
-    // 1. Menu pilih jenis surat bagi pemohon/penduduk
-    $routes->get('pilih', 'SuratController::pilih');
-    
-    // 2. Menampilkan form dinamis berdasarkan ID jenis surat
-    $routes->get('form/(:num)', 'SuratController::form/$1');
-    
-    // 3. Memproses pengajuan surat dari form dinamis
-    $routes->post('submit/(:num)', 'SuratController::submit/$1');
+$routes->group('surat', static function ($routes) {
+    // ---- Cetak & Preview: diakses oleh Admin DAN Penduduk (filter auth saja) ----
+    // Keamanan konten dijaga di dalam controller (cetak hanya untuk status 'Disetujui')
+    $routes->get('cetak/(:num)',   'SuratController::cetak/$1',   ['filter' => 'auth']);
+    $routes->get('preview/(:num)', 'SuratController::preview/$1', ['filter' => 'auth']);
 
-    // 4. Daftar pengajuan surat yang menunggu persetujuan (Approval Kades)
-    $routes->get('persetujuan', 'SuratController::persetujuan');
+    // ---- Penduduk: Pengajuan Surat ----
+    $routes->group('', ['filter' => 'permission:kelola_surat_penduduk'], static function ($routes) {
+        // 1. Pilih jenis surat
+        $routes->get('pilih', 'SuratController::pilih');
+        // 2. Form dinamis berdasarkan ID jenis surat
+        $routes->get('form/(:num)', 'SuratController::formPengajuan/$1');
+        // 3. Submit pengajuan surat
+        $routes->post('submit/(:num)', 'SuratController::submitPengajuan/$1');
+        // 4. Riwayat surat milik penduduk yang login
+        $routes->get('riwayat', 'SuratController::riwayat');
+    });
 
-    // 5. Aksi Kades untuk menyetujui dan men-generate nomor surat secara otomatis
-    $routes->post('setujui/(:num)', 'SuratController::setujui/$1');
+    // ---- Admin/Kades: Kelola Surat ----
+    $routes->group('', ['filter' => 'permission:kelola_surat_admin'], static function ($routes) {
+        // 5. Daftar pengajuan menunggu persetujuan
+        $routes->get('persetujuan', 'SuratController::persetujuan');
+        // 6. Setujui pengajuan
+        $routes->post('setujui/(:num)', 'SuratController::setujui/$1');
+        // 7. Tolak pengajuan
+        $routes->post('tolak/(:num)', 'SuratController::tolak/$1');
+        // 8. Semua riwayat surat (admin)
+        $routes->get('semua', 'SuratController::semua');
 
-    // 6. Cetak dokumen surat akhir (diubah menjadi GET/POST aman sesuai kebutuhan cetak)
-    $routes->post('cetak', 'SuratController::cetak');
+        // ---- Manajemen Jenis Surat ----
+        // 9. Daftar jenis surat
+        $routes->get('jenis', 'SuratController::jenis');
+        // 10. Form tambah jenis surat
+        $routes->get('jenis/create', 'SuratController::jenisCreate');
+        // 11. Simpan jenis surat
+        $routes->post('jenis/store', 'SuratController::jenisStore');
+        // 12. Form edit jenis surat
+        $routes->get('jenis/edit/(:num)', 'SuratController::jenisEdit/$1');
+        // 13. Update jenis surat
+        $routes->post('jenis/update/(:num)', 'SuratController::jenisUpdate/$1');
+        // 14. Hapus jenis surat
+        $routes->delete('jenis/delete/(:num)', 'SuratController::jenisDelete/$1');
+    });
 });
 $routes->group('artikel', ['filter' => 'permission:kelola_artikel'], static function ($routes) {
     $routes->get('/', 'ArtikelController::index');
@@ -86,6 +111,15 @@ $routes->group('artikel', ['filter' => 'permission:kelola_artikel'], static func
     $routes->get('edit/(:num)', 'ArtikelController::edit/$1');
     $routes->post('update/(:num)', 'ArtikelController::update/$1');
     $routes->delete('delete/(:num)', 'ArtikelController::delete/$1');
+});
+$routes->group('sejarah', ['filter' => 'permission:kelola_artikel'], static function ($routes) {
+    $routes->get('/', 'SejarahKepemimpinanController::index');
+    $routes->get('create', 'SejarahKepemimpinanController::create');
+    $routes->post('/', 'SejarahKepemimpinanController::store');
+    $routes->get('(:num)', 'SejarahKepemimpinanController::show/$1');
+    $routes->get('(:num)/edit', 'SejarahKepemimpinanController::edit/$1');
+    $routes->post('(:num)', 'SejarahKepemimpinanController::update/$1');
+    $routes->post('(:num)/delete', 'SejarahKepemimpinanController::delete/$1');
 });
 $routes->group('galeri', ['filter' => 'permission:kelola_artikel'], static function ($routes) {
     $routes->get('/', 'GaleriController::index');
@@ -105,6 +139,9 @@ $routes->group('video', ['filter' => 'permission:kelola_artikel'], static functi
 });
 $routes->group('penduduk', ['filter' => 'permission:kelola_kependudukan'], static function ($routes) {
     $routes->get('/', 'PendudukController::index');
+    $routes->get('export-page', 'PendudukController::exportPage');
+    $routes->get('export', 'PendudukController::export');
+    $routes->get('verifikasi/(:num)', 'PendudukController::verifikasi/$1');
     $routes->get('create', 'PendudukController::create');
     $routes->post('store', 'PendudukController::store');
     $routes->get('show/(:num)', 'PendudukController::show/$1');
@@ -119,4 +156,11 @@ $routes->group('kartu-keluarga', ['filter' => 'permission:kelola_kependudukan'],
     $routes->get('edit/(:num)', 'KartuKeluargaController::edit/$1');
     $routes->post('update/(:num)', 'KartuKeluargaController::update/$1');
     $routes->delete('delete/(:num)', 'KartuKeluargaController::delete/$1');
+});
+
+// Rute Profil Mandiri Penduduk
+$routes->group('profil', ['filter' => 'auth'], static function ($routes) {
+    $routes->get('/', 'ProfilPendudukController::index');
+    $routes->post('link-akun', 'ProfilPendudukController::linkAkun');
+    $routes->post('simpan', 'ProfilPendudukController::simpan');
 });

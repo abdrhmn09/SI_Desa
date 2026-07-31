@@ -16,6 +16,7 @@ class KartuKeluargaModel extends Model
         'no_kk',
         'kepala_keluarga_id',
         'alamat',
+        'dusun',
         'rt',
         'rw',
         'tanggal_dikeluarkan',

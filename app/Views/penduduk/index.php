@@ -6,21 +6,26 @@
         <h5 class="mb-0 fw-bold"><?= esc($title) ?></h5>
         <small class="text-muted">Kelola data kependudukan</small>
     </div>
-    <a href="<?= site_url('penduduk/create') ?>" class="btn btn-success btn-sm">
-        <i class="bi bi-person-plus me-1"></i> Tambah Penduduk
-    </a>
+    <div class="d-flex gap-2">
+        <a href="<?= site_url('penduduk/export-page') ?>" class="btn btn-outline-success btn-sm">
+            <i class="bi bi-file-earmark-excel me-1"></i> Ekspor Excel
+        </a>
+        <a href="<?= site_url('penduduk/create') ?>" class="btn btn-success btn-sm">
+            <i class="bi bi-person-plus me-1"></i> Tambah Penduduk
+        </a>
+    </div>
 </div>
 
 <!-- Filter -->
 <div class="card mb-3">
     <div class="card-body py-2">
         <form method="get" class="row g-2 align-items-end">
-            <div class="col-md-5">
+            <div class="col-md-4">
                 <input type="text" name="cari" class="form-control form-control-sm" placeholder="Cari NIK atau nama..." value="<?= esc($cari ?? '') ?>">
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <select name="jk" class="form-select form-select-sm">
-                    <option value="">Semua Jenis Kelamin</option>
+                    <option value="">Semua JK</option>
                     <option value="Laki-laki" <?= ($filterJK ?? '') === 'Laki-laki' ? 'selected' : '' ?>>Laki-laki</option>
                     <option value="Perempuan" <?= ($filterJK ?? '') === 'Perempuan' ? 'selected' : '' ?>>Perempuan</option>
                 </select>
@@ -33,9 +38,16 @@
                     <?php endforeach; ?>
                 </select>
             </div>
+            <div class="col-md-2">
+                <select name="verifikasi" class="form-select form-select-sm">
+                    <option value="">Semua Verifikasi</option>
+                    <option value="1" <?= ($filterVerifikasi ?? '') === '1' ? 'selected' : '' ?>>Terverifikasi</option>
+                    <option value="0" <?= ($filterVerifikasi ?? '') === '0' ? 'selected' : '' ?>>Belum Diverifikasi</option>
+                </select>
+            </div>
             <div class="col-md-2 d-flex gap-1">
-                <button type="submit" class="btn btn-sm btn-primary flex-fill"><i class="bi bi-search"></i></button>
-                <a href="<?= site_url('penduduk') ?>" class="btn btn-sm btn-outline-secondary flex-fill"><i class="bi bi-x"></i></a>
+                <button type="submit" class="btn btn-sm btn-primary flex-fill"><i class="bi bi-search"></i> Filter</button>
+                <a href="<?= site_url('penduduk') ?>" class="btn btn-sm btn-outline-secondary flex-fill"><i class="bi bi-x"></i> Reset</a>
             </div>
         </form>
     </div>
@@ -44,7 +56,7 @@
 <div class="card">
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-hover mb-0">
+            <table class="table table-hover mb-0 align-middle">
                 <thead>
                     <tr>
                         <th>#</th>
@@ -53,21 +65,23 @@
                         <th>No KK</th>
                         <th>Hubungan</th>
                         <th>JK</th>
-                        <th>Tempat / Tanggal Lahir</th>
-                        <th>Agama</th>
-                        <th>Status Kawin</th>
+                        <th>Akun Tautan</th>
+                        <th>Status Data</th>
                         <th>Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($penduduk)): ?>
-                    <tr><td colspan="10" class="text-center py-4 text-muted"><i class="bi bi-inbox fs-3 d-block mb-2"></i>Tidak ada data penduduk</td></tr>
+                    <tr><td colspan="9" class="text-center py-4 text-muted"><i class="bi bi-inbox fs-3 d-block mb-2"></i>Tidak ada data penduduk</td></tr>
                     <?php else: ?>
                     <?php foreach ($penduduk as $i => $p): ?>
                     <tr>
                         <td class="text-muted small"><?= $i + 1 ?></td>
                         <td><span class="font-monospace small"><?= esc($p['nik']) ?></span></td>
-                        <td class="fw-semibold"><?= esc($p['nama_lengkap']) ?></td>
+                        <td>
+                            <div class="fw-semibold"><?= esc($p['nama_lengkap']) ?></div>
+                            <small class="text-muted"><?= esc($p['tempat_lahir'] ?? '-') ?>, <?= esc($p['tanggal_lahir'] ?? '-') ?></small>
+                        </td>
                         <td class="small"><?= esc($p['no_kk'] ?? '-') ?></td>
                         <td><span class="badge bg-secondary-subtle text-secondary"><?= esc($p['hubungan_keluarga'] ?? '-') ?></span></td>
                         <td>
@@ -77,11 +91,29 @@
                                 <span class="badge bg-danger-subtle text-danger"><i class="bi bi-gender-female"></i></span>
                             <?php else: ?>-<?php endif; ?>
                         </td>
-                        <td class="small"><?= esc($p['tempat_lahir'] ?? '-') ?>, <?= esc($p['tanggal_lahir'] ?? '-') ?></td>
-                        <td class="small"><?= esc($p['agama'] ?? '-') ?></td>
-                        <td class="small"><?= esc($p['status_kawin'] ?? '-') ?></td>
+                        <td>
+                            <?php if (!empty($p['linked_user'])): ?>
+                                <span class="badge bg-info-subtle text-info"><i class="bi bi-person-check me-1"></i><?= esc($p['linked_user']) ?></span>
+                            <?php else: ?>
+                                <span class="text-muted small">-</span>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <?php if ($p['is_verified']): ?>
+                                <span class="badge bg-success-subtle text-success"><i class="bi bi-check-circle-fill me-1"></i>Verified</span>
+                            <?php else: ?>
+                                <span class="badge bg-warning-subtle text-warning"><i class="bi bi-clock me-1"></i>Belum Verif</span>
+                            <?php endif; ?>
+                        </td>
                         <td>
                             <div class="d-flex gap-1">
+                                <!-- Tombol Verifikasi / Batal Verifikasi -->
+                                <?php if ($p['is_verified']): ?>
+                                    <a href="<?= site_url('penduduk/verifikasi/'.$p['id']) ?>" class="btn btn-xs btn-outline-secondary" title="Batalkan Verifikasi"><i class="bi bi-x-circle"></i></a>
+                                <?php else: ?>
+                                    <a href="<?= site_url('penduduk/verifikasi/'.$p['id']) ?>" class="btn btn-xs btn-success" title="Verifikasi Data"><i class="bi bi-check-lg"></i></a>
+                                <?php endif; ?>
+
                                 <a href="<?= site_url('penduduk/show/'.$p['id']) ?>" class="btn btn-xs btn-outline-info" title="Detail"><i class="bi bi-eye"></i></a>
                                 <a href="<?= site_url('penduduk/edit/'.$p['id']) ?>" class="btn btn-xs btn-outline-warning" title="Edit"><i class="bi bi-pencil"></i></a>
                                 <button type="button" class="btn btn-xs btn-outline-danger" title="Hapus"

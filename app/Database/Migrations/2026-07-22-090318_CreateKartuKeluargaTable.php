@@ -29,6 +29,11 @@ class CreateKartuKeluargaTable extends Migration
                 'type' => 'TEXT',
                 'null' => true,
             ],
+            'dusun' => [
+                'type' => 'VARCHAR',
+                'constraint' => 50,
+                'null' => true,
+            ],
             'rt' => [
                 'type'       => 'VARCHAR',
                 'constraint' => 3,

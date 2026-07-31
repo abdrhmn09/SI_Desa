@@ -18,6 +18,7 @@ class UserModel extends Model
         'password',
         'role_id',
         'wilayah_id',
+        'penduduk_id',
         'is_active',
         'otp_code',
         'otp_expires_at',

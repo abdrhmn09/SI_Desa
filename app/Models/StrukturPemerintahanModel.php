@@ -12,7 +12,7 @@ class StrukturPemerintahanModel extends Model
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
 
-    protected $allowedFields    = [
+    protected $allowedFields = [
         'nama_jabatan',
         'nama_pejabat',
         'tahun',

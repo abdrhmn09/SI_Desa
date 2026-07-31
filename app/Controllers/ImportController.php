@@ -148,7 +148,8 @@ class ImportController extends BaseController
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Data Kartu Keluarga');
 
-        $sheet->mergeCells('A1:F1');
+        // Mengubah rentang merge dari F1 menjadi G1 karena ada penambahan 1 kolom
+        $sheet->mergeCells('A1:G1');
         $sheet->setCellValue('A1', 'TEMPLATE IMPORT DATA KARTU KELUARGA - SI DESA');
         $sheet->getStyle('A1')->applyFromArray([
             'font'      => ['bold' => true, 'size' => 13, 'color' => ['rgb' => 'FFFFFF']],
@@ -157,7 +158,8 @@ class ImportController extends BaseController
         ]);
         $sheet->getRowDimension(1)->setRowHeight(30);
 
-        $sheet->mergeCells('A2:F2');
+        // Mengubah rentang merge dari F2 menjadi G2
+        $sheet->mergeCells('A2:G2');
         $sheet->setCellValue('A2', 'Petunjuk: Isi data mulai baris ke-4. No KK harus unik 16 digit. RT/RW maksimal 3 digit. Tanggal format YYYY-MM-DD.');
         $sheet->getStyle('A2')->applyFromArray([
             'font'      => ['italic' => true, 'size' => 9],
@@ -165,11 +167,14 @@ class ImportController extends BaseController
         ]);
         $sheet->getRowDimension(2)->setRowHeight(25);
 
-        $headers = ['No KK (16 digit)*', 'Alamat', 'RT', 'RW', 'Tanggal Dikeluarkan (YYYY-MM-DD)', 'NIK Kepala Keluarga (Opsional)'];
+        // Menambahkan 'Dusun' ke dalam array headers (Index ke-2)
+        $headers = ['No KK (16 digit)*', 'Alamat', 'Dusun', 'RT', 'RW', 'Tanggal Dikeluarkan (YYYY-MM-DD)', 'NIK Kepala Keluarga (Opsional)'];
         foreach ($headers as $i => $h) {
             $sheet->setCellValue(chr(65+$i).'3', $h);
         }
-        $sheet->getStyle('A3:F3')->applyFromArray([
+        
+        // Mengubah rentang style header sampai kolom G
+        $sheet->getStyle('A3:G3')->applyFromArray([
             'font'      => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
             'fill'      => ['fillType' => Fill::FILL_SOLID, 'color' => ['rgb' => '059669']],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'wrapText' => true],
@@ -178,17 +183,21 @@ class ImportController extends BaseController
 
         // Contoh
         $sheet->setCellValueExplicit('A4', '3578010101000001', \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
-        $sheet->setCellValue('B4', 'Jl. Merdeka No. 1 RT 001 RW 002');
-        $sheet->setCellValueExplicit('C4', '001', \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
-        $sheet->setCellValueExplicit('D4', '002', \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
-        $sheet->setCellValue('E4', '2020-01-01');
-        $sheet->setCellValueExplicit('F4', '3578010101900001', \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
-        $sheet->getStyle('A4:F4')->applyFromArray([
+        $sheet->setCellValue('B4', 'Jl. Merdeka No. 1'); // Alamat
+        $sheet->setCellValue('C4', 'Dusun Mawar'); // Tambahan Data Dusun
+        $sheet->setCellValueExplicit('D4', '001', \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING); // RT geser ke D
+        $sheet->setCellValueExplicit('E4', '002', \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING); // RW geser ke E
+        $sheet->setCellValue('F4', '2020-01-01'); // Tanggal geser ke F
+        $sheet->setCellValueExplicit('G4', '3578010101900001', \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING); // NIK geser ke G
+        
+        // Mengubah rentang style contoh sampai kolom G
+        $sheet->getStyle('A4:G4')->applyFromArray([
             'fill' => ['fillType' => Fill::FILL_SOLID, 'color' => ['rgb' => 'ECFDF5']],
             'font' => ['color' => ['rgb' => '065F46'], 'italic' => true],
         ]);
 
-        foreach ([22, 38, 8, 8, 28, 22] as $i => $w) {
+        // Menambahkan lebar (width) untuk kolom Dusun (misal 20) di posisi ke-3
+        foreach ([22, 38, 20, 8, 8, 28, 22] as $i => $w) {
             $sheet->getColumnDimension(chr(65+$i))->setWidth($w);
         }
 
@@ -366,12 +375,14 @@ class ImportController extends BaseController
 
                 if (empty(trim((string)($row[0] ?? '')))) continue;
 
+                // Pemetaan kolom disesuaikan dengan template baru
                 $noKK           = trim((string)($row[0] ?? ''));
                 $alamat         = trim((string)($row[1] ?? ''));
-                $rt             = trim((string)($row[2] ?? ''));
-                $rw             = trim((string)($row[3] ?? ''));
-                $tglDikeluarkan = trim((string)($row[4] ?? ''));
-                $nikKepala      = trim((string)($row[5] ?? ''));
+                $dusun          = trim((string)($row[2] ?? '')); // Kolom C (Dusun)
+                $rt             = trim((string)($row[3] ?? '')); // Kolom D (RT - bergeser dari 2 ke 3)
+                $rw             = trim((string)($row[4] ?? '')); // Kolom E (RW - bergeser dari 3 ke 4)
+                $tglDikeluarkan = trim((string)($row[5] ?? '')); // Kolom F (Tanggal - bergeser dari 4 ke 5)
+                $nikKepala      = trim((string)($row[6] ?? '')); // Kolom G (NIK - bergeser dari 5 ke 6)
 
                 if (empty($noKK)) {
                     $errors[] = "Baris {$actualLine}: No KK tidak boleh kosong.";
@@ -410,6 +421,7 @@ class ImportController extends BaseController
                 $this->kkModel->save([
                     'no_kk'               => $noKK,
                     'alamat'              => $alamat ?: null,
+                    'dusun'               => $dusun ?: null, // Menambahkan field dusun
                     'rt'                  => $rt ?: null,
                     'rw'                  => $rw ?: null,
                     'tanggal_dikeluarkan' => $tanggalDikeluarkan,

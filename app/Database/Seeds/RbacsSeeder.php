@@ -16,6 +16,7 @@ class RbacsSeeder extends Seeder
             ['nama_role' => 'Operator',      'created_at' => date('Y-m-d H:i:s')],
             ['nama_role' => 'Redaksi',       'created_at' => date('Y-m-d H:i:s')],
             ['nama_role' => 'Kepala Dusun',  'created_at' => date('Y-m-d H:i:s')],
+            ['nama_role' => 'Penduduk',      'created_at' => date('Y-m-d H:i:s')],
         ];
 
         $this->db->table('roles')->insertBatch($roles);
@@ -29,7 +30,8 @@ class RbacsSeeder extends Seeder
             'lihat_log',
             'akses_semua_modul',
             'kelola_kependudukan',
-            'kelola_surat',
+            'kelola_surat_admin',
+            'kelola_surat_penduduk',
             'lihat_statistik',
             'kelola_bansos',
             'kelola_artikel',
@@ -50,12 +52,10 @@ class RbacsSeeder extends Seeder
 
         // ---------------------------------------------------------
         // 3. Ambil ulang ID role & permission yang baru diinsert
-        //    (supaya insert ke role_permissions tidak hardcode ID)
         // ---------------------------------------------------------
         $roleRows = $this->db->table('roles')->get()->getResultArray();
         $permissionRows = $this->db->table('permissions')->get()->getResultArray();
 
-        // Mapping nama => id, biar gampang dipanggil di bawah
         $roleId = array_column($roleRows, 'id', 'nama_role');
         $permissionId = array_column($permissionRows, 'id', 'nama_permission');
 
@@ -69,7 +69,7 @@ class RbacsSeeder extends Seeder
                 'lihat_log',
                 'akses_semua_modul',
                 'kelola_kependudukan',
-                'kelola_surat',
+                'kelola_surat_admin',
                 'lihat_statistik',
                 'kelola_bansos',
                 'kelola_artikel',
@@ -79,7 +79,7 @@ class RbacsSeeder extends Seeder
             ],
             'Operator' => [
                 'kelola_kependudukan',
-                'kelola_surat',
+                'kelola_surat_admin',
                 'lihat_statistik',
                 'kelola_bansos',
             ],
@@ -90,6 +90,9 @@ class RbacsSeeder extends Seeder
             ],
             'Kepala Dusun' => [
                 'kelola_warga_lokal',
+            ],
+            'Penduduk' => [
+                'kelola_surat_penduduk',
             ],
         ];
 

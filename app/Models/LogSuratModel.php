@@ -33,10 +33,23 @@ class LogSuratModel extends Model
      */
     public function getRiwayatLengkap()
     {
-        return $this->select('log_surat.*, penduduk.nama_lengkap, penduduk.nik, jenis_surat.nama_surat')
+        return $this->select('log_surat.*, penduduk.nama_lengkap, penduduk.nik, jenis_surat.nama_surat, jenis_surat.kode_surat')
             ->join('penduduk', 'penduduk.id = log_surat.penduduk_id')
             ->join('jenis_surat', 'jenis_surat.id = log_surat.jenis_surat_id')
             ->orderBy('log_surat.created_at', 'DESC')
+            ->findAll();
+    }
+
+    /**
+     * Ambil pengajuan yang berstatus Menunggu (Untuk halaman persetujuan admin)
+     */
+    public function getPengajuanMenunggu()
+    {
+        return $this->select('log_surat.*, penduduk.nama_lengkap, penduduk.nik, jenis_surat.nama_surat, jenis_surat.kode_surat')
+            ->join('penduduk', 'penduduk.id = log_surat.penduduk_id')
+            ->join('jenis_surat', 'jenis_surat.id = log_surat.jenis_surat_id')
+            ->where('log_surat.status', 'Menunggu')
+            ->orderBy('log_surat.created_at', 'ASC')
             ->findAll();
     }
 
@@ -45,10 +58,18 @@ class LogSuratModel extends Model
      */
     public function getRiwayatPenduduk($pendudukId)
     {
-        return $this->select('log_surat.*, jenis_surat.nama_surat')
+        return $this->select('log_surat.*, jenis_surat.nama_surat, jenis_surat.kode_surat')
             ->join('jenis_surat', 'jenis_surat.id = log_surat.jenis_surat_id')
             ->where('log_surat.penduduk_id', $pendudukId)
             ->orderBy('log_surat.created_at', 'DESC')
             ->findAll();
+    }
+
+    /**
+     * Hitung total pengajuan menunggu (untuk badge notifikasi)
+     */
+    public function countMenunggu(): int
+    {
+        return $this->where('status', 'Menunggu')->countAllResults();
     }
 }

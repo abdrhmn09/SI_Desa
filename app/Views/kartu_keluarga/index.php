@@ -21,6 +21,7 @@
                         <th>No KK</th>
                         <th>Kepala Keluarga</th>
                         <th>Alamat</th>
+                        <th>Dusun</th>
                         <th>RT / RW</th>
                         <th>Tgl Dikeluarkan</th>
                         <th>Anggota</th>
@@ -37,6 +38,7 @@
                         <td class="font-monospace fw-bold"><?= esc($kk['no_kk']) ?></td>
                         <td><?= esc($kk['nama_kepala'] ?? '-') ?></td>
                         <td class="small"><?= esc($kk['alamat'] ?? '-') ?></td>
+                        <td class="small"><?= esc($kk['dusun'] ?? '-') ?></td>
                         <td class="small"><?= esc($kk['rt'] ?? '-') ?> / <?= esc($kk['rw'] ?? '-') ?></td>
                         <td class="small"><?= esc($kk['tanggal_dikeluarkan'] ?? '-') ?></td>
                         <td><span class="badge bg-primary-subtle text-primary"><?= esc($kk['jumlah_anggota'] ?? 0) ?> jiwa</span></td>

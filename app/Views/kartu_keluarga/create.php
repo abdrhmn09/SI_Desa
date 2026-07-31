@@ -38,6 +38,10 @@
                     <label class="form-label fw-semibold">Alamat</label>
                     <textarea name="alamat" class="form-control" rows="2"><?= old('alamat') ?></textarea>
                 </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Dusun</label>
+                    <textarea name="dusun" class="form-control" rows="2"><?= old('dusun') ?></textarea>
+                </div>
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">RT</label>
                     <input type="text" name="rt" class="form-control" maxlength="5" value="<?= old('rt') ?>">
