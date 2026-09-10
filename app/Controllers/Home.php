@@ -50,41 +50,16 @@ class Home extends BaseController
         $artikel = $query->paginate(9);
 
         return view('berita_publik', [
-            'identitas' => $identitasModel->getIdentitas(),
-            'artikel'   => $artikel,
-            'kategori'  => $kategori,
-            'pager'     => $artikelModel->pager,
+            'identitas'    => $identitasModel->getIdentitas(),
+            'artikel'      => $artikel,
+            'kategori'     => $kategori,
+            'kategoriList' => ['Berita', 'Pengumuman', 'Agenda'],
+            'pager'        => $artikelModel->pager,
         ]);
     }
 
     /**
      * Baca detail satu artikel.
-     *
-     * BUG FIX: sebelumnya artikel/berita yang diklik dari landing page / halaman
-     * berita kadang tidak muncul ke halaman detailnya. Penyebab paling umum:
-     *   1) Kolom `slug` kosong/null untuk sebagian data (mis. data lama sebelum
-     *      slug dibuat otomatis), sehingga link menjadi site_url('artikel/')
-     *      TANPA segmen — itu match ke rute admin ArtikelController::index()
-     *      (yang ada di balik filter login), bukan ke halaman baca publik.
-     *   2) Rute publik 'artikel/(:segment)' tidak sengaja ikut terbungkus di
-     *      dalam grup filter 'auth' milik admin di Routes.php.
-     *
-     * Fix di sisi controller ini: kalau pencarian berdasarkan slug tidak
-     * ketemu TAPI segmen yang dikirim berupa angka murni, coba juga cari
-     * berdasarkan ID. Ini jaga-jaga supaya artikel tetap bisa dibuka meskipun
-     * slug-nya belum terisi. Untuk penyebab (2), cek Routes.php — pastikan
-     * baris berikut TIDAK berada di dalam group yang memakai ['filter' => 'auth']:
-     *
-     *   $routes->get('artikel/(:segment)', 'Home::bacaArtikel/$1');
-     *   $routes->get('berita', 'Home::berita');
-     *
-     * dan letakkan keduanya SEBELUM (di luar) grup admin:
-     *
-     *   $routes->group('artikel', ['filter' => 'auth'], static function ($routes) {
-     *       $routes->get('/', 'ArtikelController::index');
-     *       $routes->get('(:num)', 'ArtikelController::show/$1'); // pakai (:num), bukan (:segment)
-     *       ...
-     *   });
      */
     public function bacaArtikel($slug)
     {
@@ -100,11 +75,17 @@ class Home extends BaseController
             throw new \CodeIgniter\Exceptions\PageNotFoundException('Artikel tidak ditemukan atau belum dipublikasi.');
         }
 
+        $latestArtikel = $artikelModel->where('status', 'published')
+            ->where('id !=', $artikel['id'])
+            ->orderBy('created_at', 'DESC')
+            ->findAll(4);
+
         $identitasModel = new \App\Models\IdentitasDesaModel();
 
         return view('artikel_publik', [
-            'identitas' => $identitasModel->getIdentitas(),
-            'artikel'   => $artikel,
+            'identitas'     => $identitasModel->getIdentitas(),
+            'artikel'       => $artikel,
+            'latestArtikel' => $latestArtikel,
         ]);
     }
 }

@@ -18,7 +18,7 @@
             <?php foreach ($artikel as $i => $a): ?>
             <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="<?= $i * 100 ?>">
                 <?php $slugArtikel = !empty($a['slug']) ? $a['slug'] : $a['id']; ?>
-                <a href="<?= site_url('artikel/' . $slugArtikel) ?>" class="text-decoration-none text-reset">
+                <a href="<?= site_url('baca-artikel/' . $slugArtikel) ?>" class="text-decoration-none text-reset">
                     <div class="artikel-card">
                         <div class="artikel-img">
                             <?php if (!empty($a['gambar'])): ?>

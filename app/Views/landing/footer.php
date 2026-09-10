@@ -4,7 +4,13 @@
         <div class="row g-5 pb-4">
             <div class="col-lg-4 col-md-6">
                 <div class="footer-brand d-flex align-items-center gap-2 mb-3">
-                    <div class="brand-logo"><i class="bi bi-house-heart-fill text-white" style="font-size:.9rem"></i></div>
+                    <?php 
+                        $logoSrc = base_url('logoDesa.png');
+                        if (!empty($identitas['logo']) && file_exists(FCPATH . 'uploads/' . $identitas['logo'])) {
+                            $logoSrc = base_url('uploads/' . $identitas['logo']);
+                        }
+                    ?>
+                    <img src="<?= $logoSrc ?>" alt="Logo <?= esc($identitas['nama_desa'] ?? 'Desa') ?>" style="height: 38px; width: auto; object-fit: contain;">
                     <span class="text-white fw-bold">Desa <?= esc($identitas['nama_desa'] ?? 'Kami') ?></span>
                 </div>
                 <p class="small mb-3" style="line-height:1.75">

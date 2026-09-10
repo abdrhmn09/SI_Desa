@@ -20,6 +20,7 @@ $routes->get('reset-password', 'ForgotPasswordController::resetPasswordForm');
 $routes->post('reset-password', 'ForgotPasswordController::resetPassword');
 
 $routes->get('/', 'Home::index');
+$routes->get('berita', 'Home::berita');
 $routes->get('baca-artikel/(:segment)', 'Home::bacaArtikel/$1');
 $routes->get('dashboard', 'AuthController::dashboard', ['filter' => 'auth']);
 

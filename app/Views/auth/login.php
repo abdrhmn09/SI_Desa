@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login — SI Desa</title>
+    <?php
+        $identitasModel = new \App\Models\IdentitasDesaModel();
+        $identitasApp = $identitasModel->getIdentitas();
+        $namaDesaApp = !empty($identitasApp['nama_desa']) ? $identitasApp['nama_desa'] : 'Desa';
+    ?>
+    <title>Login — <?= esc($namaDesaApp) ?></title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
@@ -20,9 +25,15 @@
 <body>
 <div class="login-card card">
     <div class="login-header">
-        <i class="bi bi-house-heart-fill"></i>
-        <h4 class="mt-2 mb-0 fw-bold">SI Desa</h4>
-        <small class="opacity-75">Sistem Informasi Desa</small>
+        <?php 
+            $logoSrcApp = base_url('logoDesa.png');
+            if (!empty($identitasApp['logo']) && file_exists(FCPATH . 'uploads/' . $identitasApp['logo'])) {
+                $logoSrcApp = base_url('uploads/' . $identitasApp['logo']);
+            }
+        ?>
+        <img src="<?= $logoSrcApp ?>" alt="Logo <?= esc($namaDesaApp) ?>" style="height: 60px; width: auto; object-fit: contain;" class="mb-2">
+        <h4 class="mt-2 mb-0 fw-bold"><?= esc($namaDesaApp) ?></h4>
+        <small class="opacity-75">Sistem Informasi <?= esc($namaDesaApp) ?></small>
     </div>
     <div class="login-body">
         <?php if (session()->getFlashdata('success')): ?>

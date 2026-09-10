@@ -88,8 +88,13 @@
         </div>
     </div>
 
+    <?php 
+        $identitasModel = new \App\Models\IdentitasDesaModel();
+        $identitasApp = $identitasModel->getIdentitas();
+        $namaDesaApp = !empty($identitasApp['nama_desa']) ? $identitasApp['nama_desa'] : 'Pemerintah Desa';
+    ?>
     <div class="footer-note">
-        Dokumen ini diterbitkan secara digital oleh SI Desa. No. Surat: <?= esc($nomorSurat) ?>
+        Dokumen ini diterbitkan secara digital oleh <?= esc($namaDesaApp) ?>. No. Surat: <?= esc($nomorSurat) ?>
     </div>
 </div>
 </body>

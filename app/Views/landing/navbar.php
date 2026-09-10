@@ -2,7 +2,13 @@
 <nav class="navbar navbar-expand-lg sticky-top" id="mainNav">
     <div class="container">
         <a class="navbar-brand d-flex align-items-center gap-2" href="#beranda">
-            <div class="brand-logo"><i class="bi bi-house-heart-fill text-white" style="font-size:.9rem"></i></div>
+            <?php 
+                $logoSrc = base_url('logoDesa.png');
+                if (!empty($identitas['logo']) && file_exists(FCPATH . 'uploads/' . $identitas['logo'])) {
+                    $logoSrc = base_url('uploads/' . $identitas['logo']);
+                }
+            ?>
+            <img src="<?= $logoSrc ?>" alt="Logo <?= esc($identitas['nama_desa'] ?? 'Desa') ?>" style="height: 38px; width: auto; object-fit: contain;">
             <?= esc($identitas['nama_desa'] ?? 'Desa Kami') ?>
         </a>
         <button class="navbar-toggler border-0 p-1" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">

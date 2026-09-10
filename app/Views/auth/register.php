@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daftar — SI Desa</title>
+    <?php
+        $identitasModel = new \App\Models\IdentitasDesaModel();
+        $identitasApp = $identitasModel->getIdentitas();
+        $namaDesaApp = !empty($identitasApp['nama_desa']) ? $identitasApp['nama_desa'] : 'Desa';
+    ?>
+    <title>Daftar — <?= esc($namaDesaApp) ?></title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
@@ -18,8 +23,14 @@
 <body>
 <div class="card">
     <div class="card-header">
-        <i class="bi bi-house-heart-fill fs-3"></i>
-        <h5 class="mt-1 mb-0 fw-bold">Daftar Akun — SI Desa</h5>
+        <?php 
+            $logoSrcApp = base_url('logoDesa.png');
+            if (!empty($identitasApp['logo']) && file_exists(FCPATH . 'uploads/' . $identitasApp['logo'])) {
+                $logoSrcApp = base_url('uploads/' . $identitasApp['logo']);
+            }
+        ?>
+        <img src="<?= $logoSrcApp ?>" alt="Logo <?= esc($namaDesaApp) ?>" style="height: 48px; width: auto; object-fit: contain;" class="mb-2">
+        <h5 class="mt-1 mb-0 fw-bold">Daftar Akun — <?= esc($namaDesaApp) ?></h5>
     </div>
     <div class="card-body p-4">
         <?php if (session()->getFlashdata('error')): ?>

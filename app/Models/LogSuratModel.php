@@ -12,14 +12,13 @@ class LogSuratModel extends Model
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
 
-    // TAMBAHKAN ALLOWED FIELDS BARU
     protected $allowedFields = [
         'penduduk_id',
         'jenis_surat_id',
         'nomor_surat',
-        'data_isian',          // Ditambah
-        'status',              // Ditambah
-        'ditandatangani_oleh', // Ditambah
+        'data_isian',          
+        'status',              
+        'ditandatangani_oleh', 
         'tanggal_cetak',
         'keterangan',
     ];
@@ -41,7 +40,7 @@ class LogSuratModel extends Model
     }
 
     /**
-     * Ambil pengajuan yang berstatus Menunggu (Untuk halaman persetujuan admin)
+     * Ambil pengajuan yang berstatus Menunggu
      */
     public function getPengajuanMenunggu()
     {
@@ -54,7 +53,7 @@ class LogSuratModel extends Model
     }
 
     /**
-     * Ambil riwayat khusus milik satu penduduk yang sedang login
+     * Ambil riwayat khusus milik satu penduduk
      */
     public function getRiwayatPenduduk($pendudukId)
     {
@@ -65,11 +64,45 @@ class LogSuratModel extends Model
             ->findAll();
     }
 
-    /**
-     * Hitung total pengajuan menunggu (untuk badge notifikasi)
-     */
     public function countMenunggu(): int
     {
         return $this->where('status', 'Menunggu')->countAllResults();
+    }
+
+/**
+     * Fungsi Cerdas: Generate Nomor Surat Otomatis
+     */
+    public function generateNomorSurat($formatNomor, $kodeKlasifikasi = '')
+    {
+        $tahunIni = date('Y');
+        
+        // Menghitung jumlah surat yang disetujui di tahun ini untuk mendapatkan urutan baru.
+        // Cara ini lebih tahan banting (bulletproof) dibandingkan memotong string (explode).
+        $jumlahSuratTahunIni = $this->where('status', 'Disetujui')
+                                    ->like('tanggal_cetak', $tahunIni, 'after')
+                                    ->countAllResults();
+        
+        $noUrut = $jumlahSuratTahunIni + 1;
+        $noUrutStr = str_pad($noUrut, 3, '0', STR_PAD_LEFT); 
+
+        $bulanRomawi = $this->getBulanRomawi(date('n'));
+
+        // Replace tag dinamis ke format asli (termasuk tag baru [KODE_KLASIFIKASI])
+        $nomorJadi = str_replace(
+            ['[NO_URUT]', '[BULAN]', '[TAHUN]', '[KODE_KLASIFIKASI]'], 
+            [$noUrutStr, $bulanRomawi, $tahunIni, $kodeKlasifikasi], 
+            $formatNomor
+        );
+
+        return $nomorJadi;
+    }
+
+    private function getBulanRomawi($bulan)
+    {
+        $map = [
+            1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV', 5 => 'V', 6 => 'VI',
+            7 => 'VII', 8 => 'VIII', 9 => 'IX', 10 => 'X', 11 => 'XI', 12 => 'XII'
+        ];
+        return $map[$bulan];
     }
 }

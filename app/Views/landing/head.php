@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= esc($identitas['nama_desa'] ?? 'Desa') ?> — Website Resmi Desa</title>
+    <link rel="icon" type="image/png" href="<?= base_url('logoDesa.png') ?>">
     <meta name="description" content="<?= esc(mb_substr(strip_tags($identitas['visi_misi'] ?? $identitas['sejarah'] ?? 'Website resmi desa.'), 0, 160)) ?>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -324,47 +325,77 @@
             text-transform: uppercase; letter-spacing: 1px; backdrop-filter: blur(8px);
         }
 
-        /* ───────── GALERI GRID 3 KOLOM ───────── */
-        .galeri-grid-3 {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1.25rem;
+        /* ───────── GALERI COVER FLOW CAROUSEL ───────── */
+        .galeri-carousel-wrap {
+            position: relative;
+            padding: 1.5rem 0;
+            perspective: 1200px;
+            overflow: hidden;
         }
-        @media(max-width: 768px) {
-            .galeri-grid-3 { grid-template-columns: repeat(2, 1fr); }
+        .galeri-carousel {
+            display: flex;
+            align-items: center;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            padding: 3rem 35vw;
+            cursor: grab;
+            user-select: none;
         }
-        @media(max-width: 480px) {
-            .galeri-grid-3 { grid-template-columns: 1fr; }
-        }
-        .galeri-grid-item {
-            aspect-ratio: 4/3;
+        .galeri-carousel::-webkit-scrollbar { display: none; }
+        .galeri-carousel.cursor-grabbing { cursor: grabbing; scroll-behavior: auto; }
+        .cover-flow-item {
+            flex: 0 0 auto;
+            width: 440px;
+            height: 285px;
+            margin: 0 18px;
             border-radius: 22px;
             overflow: hidden;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.18);
+            background: var(--slate-900);
             position: relative;
-            cursor: zoom-in;
-            border: 1px solid #eef2f6;
-            box-shadow: 0 8px 24px rgba(0,0,0,.07);
-            transition: transform .4s cubic-bezier(.4,0,.2,1), box-shadow .4s cubic-bezier(.4,0,.2,1);
+            transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.35s ease, box-shadow 0.35s ease;
+            transform-style: preserve-3d;
+            will-change: transform, opacity;
+            cursor: pointer;
         }
-        .galeri-grid-item:hover, .galeri-grid-item:focus-visible {
-            transform: scale(1.03) translateY(-4px);
-            box-shadow: 0 24px 55px rgba(10,46,28,.2);
+        .cover-flow-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            pointer-events: none;
+            transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
         }
-        .galeri-grid-item img {
-            width: 100%; height: 100%; object-fit: cover;
-            transition: transform .55s cubic-bezier(.4,0,.2,1);
-            pointer-events: none; display: block;
+        .cover-flow-item:hover img {
+            transform: scale(1.08);
         }
-        .galeri-grid-item:hover img { transform: scale(1.12); }
-        .galeri-grid-overlay {
-            position: absolute; inset: 0;
-            background: linear-gradient(to top, rgba(10,46,28,.88) 0%, transparent 65%);
-            display: flex; align-items: flex-end; padding: 1.25rem;
-            color: #fff; font-weight: 700; font-size: .92rem; line-height: 1.35;
-            opacity: 0; transition: opacity .3s;
+        .cover-flow-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(10, 46, 28, 0.92) 0%, rgba(10, 46, 28, 0.3) 55%, transparent 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 1.5rem;
+            color: #fff;
+            opacity: 0;
+            transition: opacity 0.35s ease;
         }
-        .galeri-grid-item:hover .galeri-grid-overlay,
-        .galeri-grid-item:focus-visible .galeri-grid-overlay { opacity: 1; }
+        .cover-flow-item.is-center .cover-flow-overlay,
+        .cover-flow-item:hover .cover-flow-overlay {
+            opacity: 1;
+        }
+        @media (max-width: 768px) {
+            .galeri-carousel {
+                padding: 2.5rem 15vw;
+            }
+            .cover-flow-item {
+                width: 300px;
+                height: 195px;
+                margin: 0 10px;
+            }
+        }
 
         /* ───────── FOOTER ───────── */
         footer { background: var(--green-dark); color: rgba(255,255,255,.65); padding-top: 5rem; }
@@ -378,21 +409,6 @@
             display: flex; align-items: center; justify-content: center; color: #fff; transition: 0.3s;
         }
         .social-link:hover { background: var(--gold); color: var(--green-dark); transform: translateY(-3px); }
-
-        /* ───────── LIGHTBOX ───────── */
-        #galleryLightbox .modal-content { background: transparent; border: none; }
-        #galleryLightbox .modal-body { display: flex; align-items: center; justify-content: center; padding: 0; position: relative; }
-        .lightbox-close, .lightbox-nav {
-            position: absolute; z-index: 1060;
-            background: rgba(255,255,255,.15); border: none;
-            width: 46px; height: 46px; border-radius: 50%;
-            color: #fff; font-size: 1.35rem; backdrop-filter: blur(8px); transition: .25s;
-        }
-        .lightbox-close:hover, .lightbox-nav:hover { background: var(--gold); color: var(--green-dark); }
-        .lightbox-close { top: -58px; right: 0; }
-        .lightbox-nav.prev { left: -62px; top: 50%; transform: translateY(-50%); }
-        .lightbox-nav.next { right: -62px; top: 50%; transform: translateY(-50%); }
-        @media(max-width:768px) { .lightbox-nav.prev { left: 8px; } .lightbox-nav.next { right: 8px; } }
 
         /* ───────── UTILITAS ───────── */
         .text-gradient { background: linear-gradient(to right, var(--green-mid), var(--green-dark)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }

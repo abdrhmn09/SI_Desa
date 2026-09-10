@@ -47,6 +47,20 @@
                             style="text-transform:uppercase">
                         <div class="form-text">Kode singkat untuk nomor surat (misal: SKD/001/2025)</div>
                     </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Kode Klasifikasi (Opsional)</label>
+                        <input type="text" name="kode_klasifikasi" class="form-control" 
+                            placeholder="Contoh: 470" 
+                            value="<?= old('kode_klasifikasi', $jenis['kode_klasifikasi'] ?? '') ?>">
+                        <div class="form-text">Kode arsip desa. Kosongkan jika ingin memakai Kode Surat.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Format Penomoran Surat</label>
+                        <input type="text" name="format_nomor" class="form-control" 
+                            placeholder="Contoh: [KODE_KLASIFIKASI]/[NO_URUT]/[BULAN]/[TAHUN]" 
+                            value="<?= old('format_nomor', $jenis['format_nomor'] ?? '') ?>">
+                        <div class="form-text">Tag tersedia: <code>[NO_URUT]</code>, <code>[BULAN]</code>, <code>[TAHUN]</code>, <code>[KODE_KLASIFIKASI]</code>. Kosongkan untuk format standar sistem.</div>
+                    </div>
                 </div>
             </div>
 

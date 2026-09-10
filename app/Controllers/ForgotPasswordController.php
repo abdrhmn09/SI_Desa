@@ -210,20 +210,24 @@ class ForgotPasswordController extends BaseController
     private function kirimEmailOtp(string $toEmail, string $otp): bool
     {
         try {
+            $identitasModel = new \App\Models\IdentitasDesaModel();
+            $identitas = $identitasModel->getIdentitas();
+            $namaDesa = !empty($identitas['nama_desa']) ? $identitas['nama_desa'] : 'Desa';
+
             $emailService = \Config\Services::email();
             $emailService->setFrom(
-                env('email.fromEmail', 'no-reply@si-desa.local'),
-                env('email.fromName', 'SI Desa')
+                env('email.fromEmail', 'no-reply@' . url_title($namaDesa, '-', true) . '.local'),
+                env('email.fromName', $namaDesa)
             );
             $emailService->setTo($toEmail);
-            $emailService->setSubject('Kode OTP Reset Password — SI Desa');
+            $emailService->setSubject('Kode OTP Reset Password — ' . $namaDesa);
             $emailService->setMessage(
                 "Halo,\n\n" .
-                "Kode OTP untuk reset password akun SI Desa Anda adalah:\n\n" .
+                "Kode OTP untuk reset password akun " . $namaDesa . " Anda adalah:\n\n" .
                 "  {$otp}\n\n" .
                 "Kode ini berlaku selama 15 menit.\n" .
                 "Jika Anda tidak meminta reset password, abaikan email ini.\n\n" .
-                "— Tim SI Desa"
+                "— Tim " . $namaDesa
             );
 
             return $emailService->send(false);

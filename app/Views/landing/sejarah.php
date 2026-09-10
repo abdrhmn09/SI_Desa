@@ -15,11 +15,11 @@
                     <div class="timeline-item" data-aos="fade-up" data-aos-delay="<?= ($i % 5) * 100 ?>">
                         <div class="timeline-marker"></div>
                         <div class="timeline-content">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
                                 <h5 class="fw-bold mb-0 text-green-dark">
                                     <i class="bi bi-person-fill me-2 text-success"></i><?= esc($sk['nama']) ?>
                                 </h5>
-                                <span class="badge bg-gold text-dark fw-bold px-3 py-2" style="font-size: 0.8rem;">
+                                <span class="badge bg-gold text-dark fw-bold px-3 py-2" style="font-size: 0.8rem; white-space: nowrap;">
                                     Masa Jabatan: <?= esc($sk['masa_jabatan']) ?>
                                 </span>
                             </div>

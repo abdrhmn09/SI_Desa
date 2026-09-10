@@ -89,7 +89,11 @@ class AuthController extends BaseController
         $roleNama = session()->get('role_nama');
         $username = session()->get('username'); // Untuk Penduduk, ini berisi NIK
 
-        $data = ['title' => 'Dashboard SI Desa'];
+        $identitasModel = new \App\Models\IdentitasDesaModel();
+        $identitas = $identitasModel->getIdentitas();
+        $namaDesa = !empty($identitas['nama_desa']) ? $identitas['nama_desa'] : 'Desa';
+
+        $data = ['title' => 'Dashboard ' . $namaDesa];
 
         if ($roleNama === 'Penduduk') {
             // ==========================================

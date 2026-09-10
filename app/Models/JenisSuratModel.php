@@ -16,8 +16,10 @@ class JenisSuratModel extends Model
     protected $allowedFields = [
         'kode_surat',
         'nama_surat',
-        'template_surat', // Diganti
-        'form_fields',    // Ditambah
+        'template_surat',
+        'kode_klasifikasi', // DITAMBAHKAN
+        'format_nomor',     // DITAMBAHKAN
+        'form_fields',
     ];
 
     protected $useTimestamps = true;

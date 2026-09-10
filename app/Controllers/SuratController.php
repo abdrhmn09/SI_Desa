@@ -74,19 +74,20 @@ class SuratController extends BaseController
         }
 
         $jenisSurat = $this->jenisSuratModel->find($logSurat['jenis_surat_id']);
-        $tahun = date('Y');
 
         $db = \Config\Database::connect();
         $db->transStart();
-
         try {
-            $urutan = $db->table('log_surat')
-                ->where('jenis_surat_id', $jenisSurat['id'])
-                ->where('status !=', 'Menunggu')
-                ->where("YEAR(created_at)", $tahun)
-                ->countAllResults() + 1;
+            // 1. Tentukan Kode Klasifikasi (jika kosong, fallback ke kode_surat)
+            $kodeKlasifikasi = !empty($jenisSurat['kode_klasifikasi']) ? $jenisSurat['kode_klasifikasi'] : $jenisSurat['kode_surat'];
+            
+            // 2. Tentukan Format Nomor (jika kosong, fallback ke format standar)
+            $formatNomor = !empty($jenisSurat['format_nomor']) 
+                           ? $jenisSurat['format_nomor'] 
+                           : '[KODE_KLASIFIKASI]/[NO_URUT]/[BULAN]/[TAHUN]';
 
-            $nomorSurat = sprintf('%s/%03d/%s', $jenisSurat['kode_surat'], $urutan, $tahun);
+            // 3. Panggil fungsi generate dari Model
+            $nomorSurat = $this->logSuratModel->generateNomorSurat($formatNomor, $kodeKlasifikasi);
 
             $this->logSuratModel->update($log_id, [
                 'nomor_surat'         => $nomorSurat,
@@ -94,7 +95,6 @@ class SuratController extends BaseController
                 'ditandatangani_oleh' => session()->get('user_id'),
                 'tanggal_cetak'       => date('Y-m-d')
             ]);
-
             $db->transComplete();
         } catch (\Throwable $e) {
             $db->transRollback();
@@ -119,6 +119,7 @@ class SuratController extends BaseController
         $kkModel = new \App\Models\KartuKeluargaModel();
         $kk = $kkModel->find($penduduk['kartu_keluarga_id']);
         $alamatLengkap = $kk ? trim($kk['alamat'] . ' RT ' . $kk['rt'] . ' / RW ' . $kk['rw']) : '-';
+        $dusun = $kk['dusun'] ?? 'Kuta Harapan';
 
         // ---- Data Identitas Desa ----
         $identitasModel = new \App\Models\IdentitasDesaModel();
@@ -126,44 +127,60 @@ class SuratController extends BaseController
 
         $html = $jenisSurat['template_surat'];
 
-        // Nomor surat & tanggal cetak baru ada setelah status "Disetujui". Saat masih
-        // "Menunggu" (dilihat lewat preview), tampilkan placeholder yang jelas alih-alih
-        // string kosong, supaya tidak membingungkan admin yang mereview.
+        // Helper format tanggal Indonesia
+        $formatIndo = function ($dateStr) {
+            if (empty($dateStr)) return '-';
+            $time = strtotime($dateStr);
+            if (!$time) return $dateStr;
+            $bulan = [
+                1 => 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+                'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+            ];
+            $d = date('d', $time);
+            $m = (int)date('m', $time);
+            $y = date('Y', $time);
+            return $d . ' ' . ($bulan[$m] ?? date('F', $time)) . ' ' . $y;
+        };
+
         $nomorSurat   = $pengajuan['nomor_surat'] ?? '';
         $tanggalCetak = $pengajuan['tanggal_cetak'] ?? '';
 
         // ---- Ganti tag data surat & penduduk ----
-        $html = str_replace('[nomor_surat]', $nomorSurat !== '' ? $nomorSurat : '(diterbitkan setelah disetujui)', $html);
+        $html = str_replace('[nomor_surat]', $nomorSurat !== '' ? $nomorSurat : ' &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ', $html);
         $html = str_replace('[nama]', $penduduk['nama_lengkap'], $html);
         $html = str_replace('[nik]', $penduduk['nik'], $html);
-        $html = str_replace('[tempat_lahir]', $penduduk['tempat_lahir'], $html);
-        $html = str_replace('[tanggal_lahir]', date('d-m-Y', strtotime($penduduk['tanggal_lahir'])), $html);
-        $html = str_replace('[pekerjaan]', $penduduk['pekerjaan'], $html);
-        $html = str_replace('[agama]', $penduduk['agama'], $html);
-        $html = str_replace('[jenis_kelamin]', $penduduk['jenis_kelamin'], $html);
-        $html = str_replace('[status_kawin]', $penduduk['status_kawin'], $html);
+        $html = str_replace('[tempat_lahir]', $penduduk['tempat_lahir'] ?? '-', $html);
+        $html = str_replace('[tanggal_lahir]', $formatIndo($penduduk['tanggal_lahir'] ?? ''), $html);
+        $html = str_replace('[pekerjaan]', $penduduk['pekerjaan'] ?? '-', $html);
+        $html = str_replace('[agama]', $penduduk['agama'] ?? '-', $html);
+        $html = str_replace('[jenis_kelamin]', $penduduk['jenis_kelamin'] ?? '-', $html);
+        $html = str_replace('[status_kawin]', $penduduk['status_kawin'] ?? '-', $html);
         $html = str_replace('[alamat]', $alamatLengkap, $html);
+        $html = str_replace('[dusun]', $dusun, $html);
+        $html = str_replace('[nama_ayah]', $penduduk['nama_ayah'] ?? '-', $html);
+        $html = str_replace('[nama_ibu]', $penduduk['nama_ibu'] ?? '-', $html);
+        $html = str_replace('[logo_url]', base_url('logoDesa.png'), $html);
         $html = str_replace(
             '[tanggal_cetak]',
-            $tanggalCetak !== '' ? date('d F Y', strtotime($tanggalCetak)) : date('d F Y') . ' (perkiraan)',
+            $tanggalCetak !== '' ? $formatIndo($tanggalCetak) : $formatIndo(date('Y-m-d')),
             $html
         );
 
         // ---- Ganti tag identitas desa ----
-        $html = str_replace('[nama_desa]',        $identitas['nama_desa']        ?? '-', $html);
+        $html = str_replace('[nama_desa]',        $identitas['nama_desa']        ?? 'Blang Kubu', $html);
         $html = str_replace('[kode_desa]',        $identitas['kode_desa']        ?? '-', $html);
-        $html = str_replace('[nama_kepala_desa]', $identitas['nama_kepala_desa'] ?? '-', $html);
+        $html = str_replace('[nama_kepala_desa]', $identitas['nama_kepala_desa'] ?? 'MARHADI', $html);
         $html = str_replace('[nip_kepala_desa]',  $identitas['nip_kepala_desa']  ?? '-', $html);
         $html = str_replace('[alamat_kantor]',    $identitas['alamat_kantor']    ?? '-', $html);
-        $html = str_replace('[kecamatan]',        $identitas['kecamatan']        ?? '-', $html);
-        $html = str_replace('[kabupaten]',        $identitas['kabupaten']        ?? '-', $html);
-        $html = str_replace('[provinsi]',         $identitas['provinsi']         ?? '-', $html);
+        $html = str_replace('[kecamatan]',        $identitas['kecamatan']        ?? 'Peudada', $html);
+        $html = str_replace('[kabupaten]',        $identitas['kabupaten']        ?? 'Bireuen', $html);
+        $html = str_replace('[provinsi]',         $identitas['provinsi']         ?? 'Aceh', $html);
         $html = str_replace('[kodepos]',          $identitas['kodepos']          ?? '-', $html);
         $html = str_replace('[telepon]',          $identitas['telepon']          ?? '-', $html);
         $html = str_replace('[email]',            $identitas['email']            ?? '-', $html);
 
         // ---- Ganti isian dinamis dari form ----
-        $isianDinamis = json_decode($pengajuan['data_isian'], true) ?? [];
+        $isianDinamis = json_decode($pengajuan['data_isian'] ?? '[]', true) ?? [];
         foreach ($isianDinamis as $key => $value) {
             $html = str_replace('[' . $key . ']', htmlspecialchars($value), $html);
         }
@@ -296,9 +313,11 @@ class SuratController extends BaseController
     public function jenisStore()
     {
         $rules = [
-            'kode_surat'     => 'required|is_unique[jenis_surat.kode_surat]',
-            'nama_surat'     => 'required',
-            'template_surat' => 'required'
+            'kode_surat'       => 'required|is_unique[jenis_surat.kode_surat]',
+            'nama_surat'       => 'required',
+            'template_surat'   => 'required',
+            'kode_klasifikasi' => 'permit_empty|max_length[20]',
+            'format_nomor'     => 'permit_empty|max_length[100]'
         ];
 
         if (!$this->validate($rules)) {
@@ -314,10 +333,12 @@ class SuratController extends BaseController
         }
 
         $this->jenisSuratModel->save([
-            'kode_surat'     => $this->request->getPost('kode_surat'),
-            'nama_surat'     => $this->request->getPost('nama_surat'),
-            'template_surat' => $this->request->getPost('template_surat'),
-            'form_fields'    => empty($formFields) ? null : $formFields
+            'kode_surat'       => $this->request->getPost('kode_surat'),
+            'nama_surat'       => $this->request->getPost('nama_surat'),
+            'template_surat'   => $this->request->getPost('template_surat'),
+            'kode_klasifikasi' => $this->request->getPost('kode_klasifikasi') ?: null,
+            'format_nomor'     => $this->request->getPost('format_nomor') ?: null,
+            'form_fields'      => empty($formFields) ? null : $formFields
         ]);
 
         return redirect()->to('/surat/jenis')->with('success', 'Jenis Surat berhasil ditambahkan.');

@@ -27,6 +27,16 @@ class CreateJenisSuratTable extends Migration
                 'type'       => 'TEXT',
                 'null'       => true,
             ],
+            'kode_klasifikasi' => [
+                'type'       => 'VARCHAR',
+                'constraint' => 20,
+                'null'       => true,
+            ],
+            'format_nomor' => [
+                'type'       => 'VARCHAR',
+                'constraint' => 100,
+                'null'       => true,
+            ],
             'form_fields' => [
                 'type'       => 'TEXT',
                 'null'       => true,

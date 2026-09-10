@@ -3,7 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= esc($title ?? 'SI Desa') ?> — SI Desa</title>
+    <?php
+        $identitasModel = new \App\Models\IdentitasDesaModel();
+        $identitasApp = $identitasModel->getIdentitas();
+        $namaDesaApp = !empty($identitasApp['nama_desa']) ? $identitasApp['nama_desa'] : 'Desa';
+    ?>
+    <title><?= esc($title ?? ('Dashboard ' . $namaDesaApp)) ?> — <?= esc($namaDesaApp) ?></title>
+    <link rel="icon" type="image/png" href="<?= base_url('logoDesa.png') ?>">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
@@ -155,10 +161,16 @@
 
 <nav id="sidebar">
     <a href="<?= site_url('/') ?>" class="brand">
-        <i class="bi bi-house-heart-fill fs-4"></i>
+        <?php 
+            $logoSrcApp = base_url('logoDesa.png');
+            if (!empty($identitasApp['logo']) && file_exists(FCPATH . 'uploads/' . $identitasApp['logo'])) {
+                $logoSrcApp = base_url('uploads/' . $identitasApp['logo']);
+            }
+        ?>
+        <img src="<?= $logoSrcApp ?>" alt="Logo <?= esc($namaDesaApp) ?>" style="height: 38px; width: auto; max-width: 40px; object-fit: contain;">
         <div>
-            <span>SI Desa</span>
-            <small>Sistem Informasi Desa</small>
+            <span><?= esc($namaDesaApp) ?></span>
+            <small>Sistem Informasi <?= esc($namaDesaApp) ?></small>
         </div>
     </a>
 
@@ -317,7 +329,7 @@
         <button class="btn btn-sm btn-light d-md-none" id="sidebarToggle">
             <i class="bi bi-list fs-5"></i>
         </button>
-        <div class="page-title"><?= esc($title ?? 'SI Desa') ?></div>
+        <div class="page-title"><?= esc($title ?? ('Dashboard ' . $namaDesaApp)) ?></div>
         <div class="user-chip">
             <div class="avatar"><?= strtoupper(substr(session()->get('username') ?? 'U', 0, 1)) ?></div>
             <div>

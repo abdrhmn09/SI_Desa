@@ -50,8 +50,12 @@ class ImportController extends BaseController
         $sheet->setTitle('Data Penduduk');
 
         // Header baris 1 - judul
+        $identitasModel = new \App\Models\IdentitasDesaModel();
+        $identitas = $identitasModel->getIdentitas();
+        $namaDesa = !empty($identitas['nama_desa']) ? strtoupper($identitas['nama_desa']) : 'DESA';
+
         $sheet->mergeCells('A1:K1');
-        $sheet->setCellValue('A1', 'TEMPLATE IMPORT DATA PENDUDUK - SI DESA');
+        $sheet->setCellValue('A1', 'TEMPLATE IMPORT DATA PENDUDUK - ' . $namaDesa);
         $sheet->getStyle('A1')->applyFromArray([
             'font'      => ['bold' => true, 'size' => 13, 'color' => ['rgb' => 'FFFFFF']],
             'fill'      => ['fillType' => Fill::FILL_SOLID, 'color' => ['rgb' => '1E40AF']],
@@ -149,8 +153,12 @@ class ImportController extends BaseController
         $sheet->setTitle('Data Kartu Keluarga');
 
         // Mengubah rentang merge dari F1 menjadi G1 karena ada penambahan 1 kolom
+        $identitasModel = new \App\Models\IdentitasDesaModel();
+        $identitas = $identitasModel->getIdentitas();
+        $namaDesa = !empty($identitas['nama_desa']) ? strtoupper($identitas['nama_desa']) : 'DESA';
+
         $sheet->mergeCells('A1:G1');
-        $sheet->setCellValue('A1', 'TEMPLATE IMPORT DATA KARTU KELUARGA - SI DESA');
+        $sheet->setCellValue('A1', 'TEMPLATE IMPORT DATA KARTU KELUARGA - ' . $namaDesa);
         $sheet->getStyle('A1')->applyFromArray([
             'font'      => ['bold' => true, 'size' => 13, 'color' => ['rgb' => 'FFFFFF']],
             'fill'      => ['fillType' => Fill::FILL_SOLID, 'color' => ['rgb' => '065F46']],

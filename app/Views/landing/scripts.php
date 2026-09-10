@@ -43,38 +43,4 @@
         counters.forEach((el) => observer.observe(el));
     })();
 
-    // Lightbox galeri foto (modal + tombol navigasi prev/next)
-    (() => {
-        const items = Array.from(document.querySelectorAll('.galeri-grid-item'));
-        const modalEl = document.getElementById('galleryLightbox');
-        if (!items.length || !modalEl) return;
-
-        const modal = new bootstrap.Modal(modalEl);
-        const imgEl = document.getElementById('lightboxImage');
-        let currentIndex = 0;
-
-        const showImage = (index) => {
-            currentIndex = (index + items.length) % items.length;
-            const item = items[currentIndex];
-            imgEl.src = item.dataset.img;
-            imgEl.alt = item.dataset.caption || '';
-        };
-
-        items.forEach((item, index) => {
-            const open = () => { showImage(index); modal.show(); };
-            item.addEventListener('click', open);
-            item.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
-            });
-        });
-
-        document.getElementById('lightboxPrev').addEventListener('click', () => showImage(currentIndex - 1));
-        document.getElementById('lightboxNext').addEventListener('click', () => showImage(currentIndex + 1));
-
-        document.addEventListener('keydown', (e) => {
-            if (!modalEl.classList.contains('show')) return;
-            if (e.key === 'ArrowLeft') showImage(currentIndex - 1);
-            if (e.key === 'ArrowRight') showImage(currentIndex + 1);
-        });
-    })();
 </script>

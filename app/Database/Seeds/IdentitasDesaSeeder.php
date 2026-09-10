@@ -16,7 +16,7 @@ class IdentitasDesaSeeder extends Seeder
             'nama_kepala_desa' => 'Marhadi',
             'nip_kepala_desa'  => null, // Tidak disebutkan dalam dokumen
             'alamat_kantor'    => 'Gampong Blang Kubu, Kec. Peudada, Kab. Bireuen',
-            'logo'             => null,
+            'logo'             => 'logoDesa.png',
             'provinsi'         => 'Aceh',
             'kabupaten'        => 'Bireuen',
             'kecamatan'        => 'Peudada',
