@@ -1,69 +1,100 @@
-# CodeIgniter 4 Application Starter
+# SI Desa - Sistem Informasi Desa
 
-## What is CodeIgniter?
+Sistem Informasi Desa (SI Desa) adalah platform web untuk mengelola administrasi dan informasi Gampong Blang Kubu, Kecamatan Peudada, Kabupaten Bireuen, Aceh.
 
-CodeIgniter is a PHP full-stack web framework that is light, fast, flexible and secure.
-More information can be found at the [official site](https://codeigniter.com).
+## Fitur Utama
 
-This repository holds a composer-installable app starter.
-It has been built from the
-[development repository](https://github.com/codeigniter4/CodeIgniter4).
+### Portal Publik
+- **Berita & Artikel** - Informasi terkini seputar desa
+- **Galeri** - Dokumentasi foto kegiatan desa
+- **Sejarah** - Riwayat kepemimpinan dan asal-usul desa
+- **Tentang** - Informasi geografis, demografi, dan profil desa
 
-More information about the plans for version 4 can be found in [CodeIgniter 4](https://forum.codeigniter.com/forumdisplay.php?fid=28) on the forums.
+### Admin Dashboard
+- **Manajemen Pengguna** - Kelola user dan hak akses (role-based permission)
+- **Kependudukan** - Data penduduk dan Kartu Keluarga (KK), termasuk import/export Excel
+- **Surat Menyurat** - Pengajuan surat oleh penduduk, persetujuan admin, cetak surat
+- **Artikel & Galeri** - Kelola konten website desa
+- **Struktur Pemerintahan** - Data pejabat desa
+- **Pengaturan** - Konfigurasi identitas desa
 
-You can read the [user guide](https://codeigniter.com/user_guide/)
-corresponding to the latest version of the framework.
+### Fitur Surat
+- Penduduk memilih jenis surat → mengisi form → submit pengajuan
+- Admin/Kades menyetujui atau menolak pengajuan
+- Cetak surat dalam format resmi (PDF-ready)
 
-## Installation & updates
+## Tech Stack
 
-`composer create-project codeigniter4/appstarter` then `composer update` whenever
-there is a new release of the framework.
+- **Framework**: CodeIgniter 4
+- **PHP**: ^8.2
+- **Database**: MySQL
+- **Libraries**: PHPSpreadsheet (untuk import/export Excel)
 
-When updating, check the release notes to see if there are any changes you might need to apply
-to your `app` folder. The affected files can be copied or merged from
-`vendor/codeigniter4/framework/app`.
+## Instalasi
 
-## Setup
+### Prasyarat
+- PHP 8.2 atau lebih tinggi
+- MySQL/MariaDB
+- Composer
 
-Copy `env` to `.env` and tailor for your app, specifically the baseURL
-and any database settings.
+### Langkah Instalasi
 
-## Important Change with index.php
+```bash
+# Clone repository
+git clone https://github.com/abdrhmn09/SI_Desa.git
+cd SI_Desa
 
-`index.php` is no longer in the root of the project! It has been moved inside the *public* folder,
-for better security and separation of components.
+# Install dependencies
+composer install
 
-This means that you should configure your web server to "point" to your project's *public* folder, and
-not to the project root. A better practice would be to configure a virtual host to point there. A poor practice would be to point your web server to the project root and expect to enter *public/...*, as the rest of your logic and the
-framework are exposed.
+# Copy environment file
+cp env .env
 
-**Please** read the user guide for a better explanation of how CI4 works!
+# Konfigurasi database di .env
+# DB_DATABASE=nama_database
+# DB_USERNAME=username
+# DB_PASSWORD=password
 
-## Repository Management
+# Jalankan migrasi
+php spark migrate
 
-We use GitHub issues, in our main repository, to track **BUGS** and to track approved **DEVELOPMENT** work packages.
-We use our [forum](http://forum.codeigniter.com) to provide SUPPORT and to discuss
-FEATURE REQUESTS.
+# Jalankan seeder
+php spark db:seed IdentitasDesaSeeder
+php spark db:seed TemplateSuratSeeder
 
-This repository is a "distribution" one, built by our release preparation script.
-Problems with it can be raised on our forum, or as issues in the main repository.
+# Jalankan development server
+php spark serve
+```
 
-## Server Requirements
+Akses aplikasi di `http://localhost:8080`
 
-PHP version 8.2 or higher is required, with the following extensions installed:
+## Struktur Direktori
 
-- [intl](http://php.net/manual/en/intl.requirements.php)
-- [mbstring](http://php.net/manual/en/mbstring.installation.php)
+```
+app/
+├── Config/          # Konfigurasi routing, filter, dll
+├── Controllers/     # Logic aplikasi
+├── Database/        # Migrations & Seeds
+├── Models/          # Eloquent models
+└── Views/           # Template HTML
+    ├── auth/        # Login, register, forgot password
+    ├── landing/     # Halaman publik
+    ├── surat/       # Form dan cetak surat
+    └── layout/      # Layout admin
+```
 
-> [!WARNING]
-> - The end of life date for PHP 7.4 was November 28, 2022.
-> - The end of life date for PHP 8.0 was November 26, 2023.
-> - The end of life date for PHP 8.1 was December 31, 2025.
-> - If you are still using below PHP 8.2, you should upgrade immediately.
-> - The end of life date for PHP 8.2 will be December 31, 2026.
+## Hak Akses
 
-Additionally, make sure that the following extensions are enabled in your PHP:
+| Fitur | Admin | Penduduk |
+|-------|-------|----------|
+| Kelola Pengguna | ✓ | - |
+| Kelola Kependudukan | ✓ | - |
+| Kelola Artikel | ✓ | - |
+| Pengajuan Surat | ✓ | ✓ |
+| Persetujuan Surat | ✓ | - |
+| Riwayat Surat | ✓ | ✓ |
+| Profil Mandiri | - | ✓ |
 
-- json (enabled by default - don't turn it off)
-- [mysqlnd](http://php.net/manual/en/mysqlnd.install.php) if you plan to use MySQL
-- [libcurl](http://php.net/manual/en/curl.requirements.php) if you plan to use the HTTP\CURLRequest library
+## License
+
+MIT License
